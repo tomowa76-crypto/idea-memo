@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IDEA MEMO</title>
+<title>アイデアメモ</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -118,11 +119,7 @@ body{
 .dl-near{background:var(--danger-bg);color:var(--danger-text)}
 .dl-ok{background:var(--accent-bg);color:var(--accent-text)}
 .dl-none{background:var(--bg);color:var(--text3)}
-.chevron{
-  font-size:13px;color:var(--text3);
-  transition:transform 0.2s;
-  flex-shrink:0;
-}
+.chevron{font-size:13px;color:var(--text3);transition:transform 0.2s;flex-shrink:0}
 .chevron.open{transform:rotate(90deg)}
 .timeline{display:none;padding:0 1rem 0 2.2rem;border-top:1px solid var(--border)}
 .timeline.open{display:block}
@@ -139,16 +136,19 @@ body{
   border:2px solid var(--border2);
 }
 .tl-entry:last-child{border-left-color:transparent}
+.tl-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
 .tl-date{font-size:11px;color:var(--text3)}
 .tl-text{font-size:14px;color:var(--text);margin-top:3px;line-height:1.55}
-.tl-action{
-  font-size:12px;color:#185FA5;
-  margin-top:4px;
-  display:flex;align-items:center;gap:4px;
-}
+.tl-action{font-size:12px;color:#185FA5;margin-top:4px;display:flex;align-items:center;gap:4px}
 .tl-dl{font-size:12px;color:var(--text2);margin-top:2px;display:flex;align-items:center;gap:4px}
+.del-entry-btn{background:none;border:none;color:var(--text3);font-size:15px;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0;transition:color 0.15s}
+.del-entry-btn:hover{color:var(--danger-text)}
 .add-entry{display:none;padding:0.6rem 1rem 0.8rem 2.2rem;background:var(--bg);border-top:1px solid var(--border)}
 .add-entry.open{display:block}
+.del-idea-zone{display:none;padding:0 1rem 0.8rem 1rem;background:var(--bg);border-top:1px solid var(--border)}
+.del-idea-zone.open{display:flex;justify-content:flex-end}
+.del-idea-btn{font-size:12px;color:var(--danger-text);background:none;border:none;cursor:pointer;padding:6px 0;opacity:0.7;font-family:inherit}
+.del-idea-btn:hover{opacity:1;text-decoration:underline}
 textarea,input[type=text],input[type=date]{
   width:100%;
   font-size:14px;
@@ -178,8 +178,6 @@ textarea{resize:none;min-height:62px}
   transition:background 0.15s;
 }
 .small-btn:hover{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
-
-/* modal */
 .overlay{
   display:none;position:fixed;inset:0;
   background:rgba(0,0,0,0.4);
@@ -262,7 +260,7 @@ textarea{resize:none;min-height:62px}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-import { getDatabase, ref, push, set, onValue, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
+import { getDatabase, ref, push, set, remove, onValue } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBcPTdTljJZMUVNen34K37YdKSSHKcq3Ps",
@@ -329,10 +327,16 @@ window.scrollToCard=function(id){
 
 function renderList(){
   const el=document.getElementById('idea-list');
-  const sorted=Object.entries(ideas).sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0));
+  const sorted=Object.entries(ideas).sort((a,b)=>{
+    const aEntries=Object.values(a[1].entries||{});
+    const bEntries=Object.values(b[1].entries||{});
+    const aLast=aEntries.length?Math.max(...aEntries.map(e=>e.createdAt||0)):(a[1].createdAt||0);
+    const bLast=bEntries.length?Math.max(...bEntries.map(e=>e.createdAt||0)):(b[1].createdAt||0);
+    return bLast-aLast;
+  });
   if(!sorted.length){el.innerHTML='<div class="empty">アイデアはまだありません<br>＋ボタンから追加しましょう</div>';return;}
   el.innerHTML=sorted.map(([id,idea])=>{
-    const entries=Object.entries(idea.entries||{}).sort((a,b)=>(a[1].createdAt||0)-(b[1].createdAt||0));
+    const entries=Object.entries(idea.entries||{}).sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0));
     const d=getMinDays(idea);
     let badge='';
     if(d!==null){
@@ -348,7 +352,10 @@ function renderList(){
     const isOpen=openCards[id];
     const tlHtml=entries.map(([eid,e])=>`
       <div class="tl-entry">
-        <div class="tl-date">${e.dateStr||''}</div>
+        <div class="tl-top">
+          <div class="tl-date">${e.dateStr||''}</div>
+          <button class="del-entry-btn" onclick="deleteEntry('${id}','${eid}')" title="このメモを削除">×</button>
+        </div>
         <div class="tl-text">${e.text||''}</div>
         ${e.action?`<div class="tl-action">→ ${e.action}</div>`:''}
         ${e.deadline?`<div class="tl-dl">📅 締め切り：${fmtDate(e.deadline)}</div>`:''}
@@ -374,6 +381,9 @@ function renderList(){
         </div>
         <button class="small-btn" onclick="addEntry('${id}')">＋ メモを追加</button>
       </div>
+      <div class="del-idea-zone ${isOpen?'open':''}">
+        <button class="del-idea-btn" onclick="deleteIdea('${id}')">🗑 このアイデアを削除</button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -390,6 +400,19 @@ window.addEntry=async function(id){
   await set(entryRef,{text,action:act.value.trim(),deadline:dl.value,dateStr:fmtNow(),createdAt:Date.now()});
   ta.value='';act.value='';dl.value='';
   showToast('メモを追加しました');
+}
+
+window.deleteEntry=async function(ideaId,entryId){
+  if(!confirm('このメモを削除しますか？'))return;
+  await remove(ref(db,`ideas/${ideaId}/entries/${entryId}`));
+  showToast('メモを削除しました');
+}
+
+window.deleteIdea=async function(id){
+  if(!confirm('このアイデアをすべてのメモごと削除しますか？'))return;
+  await remove(ref(db,`ideas/${id}`));
+  delete openCards[id];
+  showToast('アイデアを削除しました');
 }
 
 window.openModal=function(){
