@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アイデアメモ</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F7F6F2;
+  --surface:#FFFFFF;
+  --border:#E8E6DF;
+  --border2:#D3D0C8;
+  --text:#1A1A18;
+  --text2:#6B6A65;
+  --text3:#A09F9A;
+  --accent:#2D5016;
+  --accent-bg:#EAF3DE;
+  --accent-text:#3B6D11;
+  --warn-bg:#FAEEDA;
+  --warn-border:#EFC87A;
+  --warn-text:#854F0B;
+  --danger-bg:#FCEBEB;
+  --danger-text:#A32D2D;
+  --radius:12px;
+  --radius-sm:8px;
+}
+body{
+  font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  font-size:15px;
+  line-height:1.6;
+}
+.app{max-width:480px;margin:0 auto;padding:0 0 5rem}
+.topbar{
+  position:sticky;top:0;z-index:50;
+  background:rgba(247,246,242,0.92);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 1.1rem 0.85rem;
+  border-bottom:1px solid var(--border);
+}
+.topbar h1{font-size:17px;font-weight:600;letter-spacing:-0.01em}
+.add-btn{
+  width:38px;height:38px;border-radius:50%;
+  border:1.5px solid var(--border2);
+  background:var(--surface);
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;color:var(--text);
+  transition:background 0.15s,transform 0.1s;
+  box-shadow:0 1px 3px rgba(0,0,0,0.06);
+}
+.add-btn:hover{background:var(--accent-bg);border-color:var(--accent)}
+.add-btn:active{transform:scale(0.94)}
+.urgent-zone{padding:0.8rem 1rem 0}
+.urgent-card{
+  background:var(--warn-bg);
+  border:1px solid var(--warn-border);
+  border-radius:var(--radius);
+  padding:0.85rem 1rem;
+  animation:fadeIn 0.3s ease;
+}
+.urgent-title{
+  font-size:12px;font-weight:600;
+  color:var(--warn-text);
+  margin-bottom:8px;
+  display:flex;align-items:center;gap:5px;
+  letter-spacing:0.03em;
+}
+.urgent-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:5px 0;
+  border-bottom:1px solid var(--warn-border);
+  cursor:pointer;
+}
+.urgent-row:last-child{border-bottom:none;padding-bottom:0}
+.urgent-row:hover .ur-title{text-decoration:underline}
+.ur-title{font-size:14px;font-weight:600;color:#633806}
+.ur-sub{font-size:12px;color:var(--warn-text);margin-top:1px}
+.ur-badge{
+  font-size:11px;font-weight:700;
+  background:#EF9F27;color:#fff;
+  border-radius:5px;padding:2px 7px;
+  white-space:nowrap;flex-shrink:0;margin-left:8px;
+}
+.ur-badge.over{background:#E24B4A}
+.section-label{
+  font-size:11px;font-weight:600;
+  color:var(--text3);
+  padding:1.1rem 1.1rem 0.5rem;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+}
+.idea-card{
+  margin:0.5rem 1rem;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  overflow:hidden;
+  transition:border-color 0.15s,box-shadow 0.15s;
+  animation:fadeIn 0.25s ease;
+}
+.idea-card:hover{border-color:var(--border2);box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+.card-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0.9rem 1rem;
+  cursor:pointer;
+  gap:10px;
+}
+.card-title{font-size:15px;font-weight:600;color:var(--text)}
+.card-date{font-size:11px;color:var(--text3);margin-top:2px}
+.card-right{display:flex;align-items:center;gap:7px;flex-shrink:0}
+.dl-badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;white-space:nowrap}
+.dl-near{background:var(--danger-bg);color:var(--danger-text)}
+.dl-ok{background:var(--accent-bg);color:var(--accent-text)}
+.dl-none{background:var(--bg);color:var(--text3)}
+.chevron{
+  font-size:13px;color:var(--text3);
+  transition:transform 0.2s;
+  flex-shrink:0;
+}
+.chevron.open{transform:rotate(90deg)}
+.timeline{display:none;padding:0 1rem 0 2.2rem;border-top:1px solid var(--border)}
+.timeline.open{display:block}
+.tl-entry{
+  position:relative;
+  padding:0.7rem 0 0.7rem 1.1rem;
+  border-left:2px solid var(--border);
+}
+.tl-entry::before{
+  content:'';position:absolute;
+  left:-5px;top:1rem;
+  width:8px;height:8px;border-radius:50%;
+  background:var(--surface);
+  border:2px solid var(--border2);
+}
+.tl-entry:last-child{border-left-color:transparent}
+.tl-date{font-size:11px;color:var(--text3)}
+.tl-text{font-size:14px;color:var(--text);margin-top:3px;line-height:1.55}
+.tl-action{
+  font-size:12px;color:#185FA5;
+  margin-top:4px;
+  display:flex;align-items:center;gap:4px;
+}
+.tl-dl{font-size:12px;color:var(--text2);margin-top:2px;display:flex;align-items:center;gap:4px}
+.add-entry{display:none;padding:0.6rem 1rem 0.8rem 2.2rem;background:var(--bg);border-top:1px solid var(--border)}
+.add-entry.open{display:block}
+textarea,input[type=text],input[type=date]{
+  width:100%;
+  font-size:14px;
+  font-family:inherit;
+  border:1px solid var(--border2);
+  border-radius:var(--radius-sm);
+  padding:8px 10px;
+  background:var(--surface);
+  color:var(--text);
+  outline:none;
+  transition:border-color 0.15s;
+}
+textarea:focus,input[type=text]:focus,input[type=date]:focus{border-color:var(--accent)}
+textarea{resize:none;min-height:62px}
+.row2{display:flex;gap:7px;margin-top:7px}
+.row2 input{flex:1}
+.small-btn{
+  margin-top:8px;
+  font-size:13px;
+  font-family:inherit;
+  padding:7px 14px;
+  border:1px solid var(--border2);
+  border-radius:var(--radius-sm);
+  background:var(--surface);
+  color:var(--text);
+  cursor:pointer;
+  transition:background 0.15s;
+}
+.small-btn:hover{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
+
+/* modal */
+.overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,0.4);
+  z-index:200;
+  align-items:flex-end;
+  justify-content:center;
+}
+.overlay.open{display:flex}
+.modal{
+  background:var(--surface);
+  border-radius:var(--radius) var(--radius) 0 0;
+  width:100%;max-width:480px;
+  padding:1.4rem 1.2rem 2rem;
+  animation:slideUp 0.25s ease;
+}
+@media(min-width:520px){
+  .overlay{align-items:center}
+  .modal{border-radius:var(--radius);max-width:420px}
+}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:1rem}
+.modal label{font-size:12px;color:var(--text2);display:block;margin:10px 0 4px}
+.modal-btns{display:flex;gap:8px;margin-top:1rem;justify-content:flex-end}
+.btn-cancel{
+  font-size:14px;font-family:inherit;
+  padding:8px 18px;border:1px solid var(--border2);
+  border-radius:var(--radius-sm);background:var(--surface);color:var(--text);cursor:pointer;
+}
+.btn-primary{
+  font-size:14px;font-family:inherit;
+  padding:8px 20px;border:none;
+  border-radius:var(--radius-sm);
+  background:var(--accent);color:#fff;cursor:pointer;font-weight:600;
+  transition:opacity 0.15s;
+}
+.btn-primary:hover{opacity:0.85}
+.loading{text-align:center;padding:2.5rem 1rem;color:var(--text3);font-size:14px}
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--text3);font-size:14px}
+.toast{
+  position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);
+  background:var(--text);color:#fff;
+  font-size:13px;padding:8px 18px;border-radius:20px;
+  opacity:0;pointer-events:none;transition:opacity 0.2s;
+  z-index:999;white-space:nowrap;
+}
+.toast.show{opacity:1}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <h1>💡 アイデア一覧</h1>
+    <button class="add-btn" onclick="openModal()" title="新しいアイデアを追加">＋</button>
+  </div>
+  <div id="urgent-zone"></div>
+  <div class="section-label">すべてのアイデア</div>
+  <div id="idea-list"><div class="loading">読み込み中…</div></div>
+</div>
+
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-title">新しいアイデア</div>
+    <label>タイトル</label>
+    <input type="text" id="m-title" placeholder="アイデアのタイトル" />
+    <label>最初のメモ</label>
+    <textarea id="m-note" placeholder="思いついた内容を書いてください…"></textarea>
+    <label>次のアクション（任意）</label>
+    <input type="text" id="m-action" placeholder="例：資料を集める" />
+    <label>締め切り（任意）</label>
+    <input type="date" id="m-deadline" />
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="btn-primary" onclick="addIdea()">追加する</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { getDatabase, ref, push, set, onValue, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBcPTdTljJZMUVNen34K37YdKSSHKcq3Ps",
+  authDomain: "idea-memo-59e15.firebaseapp.com",
+  databaseURL: "https://idea-memo-59e15-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "idea-memo-59e15",
+  storageBucket: "idea-memo-59e15.firebasestorage.app",
+  messagingSenderId: "336375830093",
+  appId: "1:336375830093:web:644e73b4a8686989c72e04"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+let ideas = {};
+let openCards = {};
+
+function today(){const d=new Date();d.setHours(0,0,0,0);return d}
+function daysUntil(ds){if(!ds)return null;const d=new Date(ds);d.setHours(0,0,0,0);return Math.round((d-today())/86400000)}
+function fmtDate(ds){if(!ds)return'';const d=new Date(ds);return`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`}
+function fmtNow(){const n=new Date();return`${n.getFullYear()}/${String(n.getMonth()+1).padStart(2,'0')}/${String(n.getDate()).padStart(2,'0')} ${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+function getMinDays(idea){
+  const entries=Object.values(idea.entries||{});
+  let min=null;
+  entries.forEach(e=>{if(e.deadline){const d=daysUntil(e.deadline);if(min===null||d<min)min=d;}});
+  return min;
+}
+
+function renderUrgent(){
+  const zone=document.getElementById('urgent-zone');
+  const list=Object.entries(ideas)
+    .map(([id,idea])=>({id,...idea,minDays:getMinDays(idea)}))
+    .filter(i=>i.minDays!==null&&i.minDays<=7)
+    .sort((a,b)=>a.minDays-b.minDays);
+  if(!list.length){zone.innerHTML='';return;}
+  let html=`<div class="urgent-zone"><div class="urgent-card"><div class="urgent-title">⏰ 締め切りが近いアイデア</div>`;
+  list.forEach(i=>{
+    const d=i.minDays;
+    const label=d<0?'期限切れ':d===0?'今日':`あと${d}日`;
+    const cls=d<=0?'ur-badge over':'ur-badge';
+    const entries=Object.values(i.entries||{});
+    const urgentEntry=entries.find(e=>e.deadline&&daysUntil(e.deadline)===d);
+    const sub=urgentEntry?(urgentEntry.action||urgentEntry.text.slice(0,24)+'…'):'';
+    html+=`<div class="urgent-row" onclick="scrollToCard('${i.id}')">
+      <div><div class="ur-title">${i.title}</div>${sub?`<div class="ur-sub">${sub}</div>`:''}</div>
+      <span class="${cls}">${label}</span>
+    </div>`;
+  });
+  html+='</div></div>';
+  zone.innerHTML=html;
+}
+
+window.scrollToCard=function(id){
+  const el=document.getElementById('card-'+id);
+  if(el){el.scrollIntoView({behavior:'smooth',block:'center'});openCards[id]=true;renderList();}
+}
+
+function renderList(){
+  const el=document.getElementById('idea-list');
+  const sorted=Object.entries(ideas).sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0));
+  if(!sorted.length){el.innerHTML='<div class="empty">アイデアはまだありません<br>＋ボタンから追加しましょう</div>';return;}
+  el.innerHTML=sorted.map(([id,idea])=>{
+    const entries=Object.entries(idea.entries||{}).sort((a,b)=>(a[1].createdAt||0)-(b[1].createdAt||0));
+    const d=getMinDays(idea);
+    let badge='';
+    if(d!==null){
+      if(d<0)badge=`<span class="dl-badge dl-near">期限切れ</span>`;
+      else if(d<=7)badge=`<span class="dl-badge dl-near">あと${d}日</span>`;
+      else{
+        const dlEntry=entries.find(([,e])=>e.deadline);
+        badge=`<span class="dl-badge dl-ok">${dlEntry?fmtDate(dlEntry[1].deadline):''}</span>`;
+      }
+    } else {
+      badge=`<span class="dl-badge dl-none">期限なし</span>`;
+    }
+    const isOpen=openCards[id];
+    const tlHtml=entries.map(([eid,e])=>`
+      <div class="tl-entry">
+        <div class="tl-date">${e.dateStr||''}</div>
+        <div class="tl-text">${e.text||''}</div>
+        ${e.action?`<div class="tl-action">→ ${e.action}</div>`:''}
+        ${e.deadline?`<div class="tl-dl">📅 締め切り：${fmtDate(e.deadline)}</div>`:''}
+      </div>`).join('');
+    return `
+    <div class="idea-card" id="card-${id}">
+      <div class="card-head" onclick="toggleCard('${id}')">
+        <div style="min-width:0">
+          <div class="card-title">${idea.title||''}</div>
+          <div class="card-date">${idea.createdStr||''} 作成・${entries.length}件のメモ</div>
+        </div>
+        <div class="card-right">
+          ${badge}
+          <span class="chevron ${isOpen?'open':''}">›</span>
+        </div>
+      </div>
+      <div class="timeline ${isOpen?'open':''}">${tlHtml}</div>
+      <div class="add-entry ${isOpen?'open':''}">
+        <textarea id="ta-${id}" placeholder="新しいメモを入力…" rows="2"></textarea>
+        <div class="row2">
+          <input type="text" id="act-${id}" placeholder="次のアクション（任意）" />
+          <input type="date" id="dl-${id}" />
+        </div>
+        <button class="small-btn" onclick="addEntry('${id}')">＋ メモを追加</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.toggleCard=function(id){openCards[id]=!openCards[id];renderList();}
+
+window.addEntry=async function(id){
+  const ta=document.getElementById('ta-'+id);
+  const act=document.getElementById('act-'+id);
+  const dl=document.getElementById('dl-'+id);
+  const text=ta.value.trim();
+  if(!text)return;
+  const entryRef=push(ref(db,`ideas/${id}/entries`));
+  await set(entryRef,{text,action:act.value.trim(),deadline:dl.value,dateStr:fmtNow(),createdAt:Date.now()});
+  ta.value='';act.value='';dl.value='';
+  showToast('メモを追加しました');
+}
+
+window.openModal=function(){
+  document.getElementById('overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('m-title').focus(),100);
+}
+window.closeModal=function(){
+  document.getElementById('overlay').classList.remove('open');
+  ['m-title','m-note','m-action','m-deadline'].forEach(id=>{document.getElementById(id).value='';});
+}
+window.addIdea=async function(){
+  const title=document.getElementById('m-title').value.trim();
+  const note=document.getElementById('m-note').value.trim();
+  if(!title){document.getElementById('m-title').focus();return;}
+  const action=document.getElementById('m-action').value.trim();
+  const deadline=document.getElementById('m-deadline').value;
+  const now=Date.now();
+  const ideaRef=push(ref(db,'ideas'));
+  const ideaData={title,createdStr:fmtNow(),createdAt:now,entries:{}};
+  if(note){
+    const eKey=push(ref(db,'tmp')).key;
+    ideaData.entries[eKey]={text:note,action,deadline,dateStr:fmtNow(),createdAt:now};
+  }
+  await set(ideaRef,ideaData);
+  closeModal();
+  showToast('アイデアを追加しました');
+}
+
+onValue(ref(db,'ideas'),(snap)=>{
+  ideas=snap.val()||{};
+  renderUrgent();
+  renderList();
+});
+</script>
+</body>
+</html>
